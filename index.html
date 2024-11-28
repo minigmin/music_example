@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instrument Melody Generator</title>
+    <!-- Tone.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  </head>
+  <body>
+    <h1>Instrument Melody Generator</h1>
+    <button id="start">Start Audio</button>
+    <button id="piano" disabled>Play Piano Note</button>
+    <button id="guitar" disabled>Play Guitar Note</button>
+    <button id="drum" disabled>Play Drum Sound</button>
+    <ul id="melodyList"></ul>
+
+    <script>
+      // 피아노 음계 자동 생성
+      const generatePianoUrls = () => {
+        const ranges = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const urls = {};
+        for (let octave = 3; octave <= 5; octave++) {
+          ranges.forEach((note) => {
+            urls[
+              `${note}${octave}`
+            ] = `https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/${note}${octave}.mp3`;
+          });
+        }
+        return urls;
+      };
+
+      // 피아노, 기타, 드럼 샘플러 설정
+      const piano = new Tone.Sampler({
+        urls: generatePianoUrls(),
+      }).toDestination();
+
+      const guitar = new Tone.Sampler({
+        urls: {
+          C4: 'https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3/C4.mp3',
+          D4: 'https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3/D4.mp3',
+          E4: 'https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3/E4.mp3',
+          G4: 'https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3/G4.mp3',
+        },
+      }).toDestination();
+
+      const drum = new Tone.Sampler({
+        urls: {
+          C4: 'https://s3.amazonaws.com/audio-samples/kick.wav',
+          D4: 'https://s3.amazonaws.com/audio-samples/snare.wav',
+          E4: 'https://s3.amazonaws.com/audio-samples/hihat.wav',
+        },
+      }).toDestination();
+
+      // 랜덤 음계 목록 생성
+      const notes = [];
+      for (let octave = 3; octave <= 5; octave++) {
+        ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach((note) => {
+          notes.push(`${note}${octave}`);
+        });
+      }
+
+      // 랜덤 음계 재생 함수
+      function playInstrument(instrument, label, isDrum = false) {
+        let note;
+        if (isDrum) {
+          // 드럼은 C4, D4, E4 중 랜덤으로 선택
+          const drumSamples = ['C4', 'D4', 'E4'];
+          note = drumSamples[Math.floor(Math.random() * drumSamples.length)];
+        } else {
+          // 피아노와 기타는 랜덤 음계
+          note = notes[Math.floor(Math.random() * notes.length)];
+        }
+
+        instrument.triggerAttackRelease(note, '8n');
+
+        // UI 업데이트
+        const melodyList = document.getElementById('melodyList');
+        const listItem = document.createElement('li');
+        listItem.textContent = `${label}: ${note}`;
+        melodyList.appendChild(listItem);
+      }
+
+      // 오디오 컨텍스트 활성화
+      document.getElementById('start').addEventListener('click', async () => {
+        await Tone.start();
+        document.getElementById('piano').disabled = false;
+        document.getElementById('guitar').disabled = false;
+        document.getElementById('drum').disabled = false;
+        alert('Audio context started! Click a button to hear sounds.');
+      });
+
+      // 각 악기 버튼 이벤트
+      document.getElementById('piano').addEventListener('click', () => {
+        playInstrument(piano, 'Piano');
+      });
+
+      document.getElementById('guitar').addEventListener('click', () => {
+        playInstrument(guitar, 'Guitar');
+      });
+
+      document.getElementById('drum').addEventListener('click', () => {
+        playInstrument(drum, 'Drum', true);
+      });
+    </script>
+  </body>
+</html>
